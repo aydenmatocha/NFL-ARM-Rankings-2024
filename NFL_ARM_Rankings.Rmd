@@ -7,19 +7,19 @@ output:
     toc: TRUE
 ---
 
-ARM Ranking:
-Win% (ESPN)
-SOS (ESPN)
-Point Differential (ESPN)
-EPA/play (NFLfastR)
-EPA/play Against (NFLfastR)
+# ARM Ranking:
+1. Win% (ESPN)
+2. SOS (ESPN)
+3. Point Differential (ESPN)
+4. EPA/play (nflfastR)
+5. EPA/play Against (nflfastR)
 
-Here is the ranking formula:
+# Formula
 $$
 \text{ARM Rank} = (\alpha_1 \cdot WP) + (\alpha_2 \cdot (SOS - c_1)) + (\frac{PD + c_2}{\alpha_3})) + (\alpha_4 \cdot (EPA + c_3)) + (\alpha_5 \cdot (EPA_A - c_4))
 $$
 
-Ranking formula with values:
+# Formula With Values
 $$
 \text{ARM Rank} = (3 \cdot WP) + (5 \cdot (SOS - 0.4)) + (\frac{PD + 250}{250}) + (6.67 \cdot (EPA + 0.15)) + ((-6.67) \cdot (EPA_A - 0.15))
 $$
@@ -28,10 +28,11 @@ $$
 ```{r}
 library(tidyverse)
 library(nflfastR)
+library(DT)
 ```
 
 
-Get Win%
+# Assign Win Percentage
 ```{r}
 Lions_win <- .882
 Chiefs_win <- .882
@@ -67,8 +68,7 @@ Giants_win <- .176
 Titans_win <- .176
 ```
 
-
-Get SOS
+# Assign Strength of Schedule
 ```{r}
 Lions_SOS <- .516
 Chiefs_SOS <- .488
@@ -104,8 +104,7 @@ Giants_SOS <- .554
 Titans_SOS <- .522
 ```
 
-
-Get Point Differential
+# Assign Point Differential
 ```{r}
 Lions_PD <- 222
 Eagles_PD <- 160
@@ -146,12 +145,8 @@ Panthers_PD <- -193
 data <- load_pbp(2024)
 ```
 
-
 # Get EPA/Play
 ```{r}
-library(tidyverse)
-library(nflfastR)
-
 Lions_EPA <- data %>% filter(posteam == "DET", season_type == "REG", down <= 4) %>% group_by(posteam) %>% summarize(mean_epa = mean(epa, na.rm = TRUE)) %>% select(mean_epa) %>% pull(mean_epa)
 Eagles_EPA <- data %>% filter(posteam == "PHI", season_type == "REG", down <= 4) %>% group_by(posteam) %>% summarize(mean_epa = mean(epa, na.rm = TRUE)) %>% select(mean_epa) %>% pull(mean_epa)
 Bills_EPA <- data %>% filter(posteam == "BUF", season_type == "REG", down <= 4) %>% group_by(posteam) %>% summarize(mean_epa = mean(epa, na.rm = TRUE)) %>% select(mean_epa) %>% pull(mean_epa)
@@ -186,8 +181,7 @@ Browns_EPA <- data %>% filter(posteam == "CLE", season_type == "REG", down <= 4)
 Panthers_EPA <- data %>% filter(posteam == "CAR", season_type == "REG", down <= 4) %>% group_by(posteam) %>% summarize(mean_epa = mean(epa, na.rm = TRUE)) %>% select(mean_epa) %>% pull(mean_epa)
 ```
 
-
-Get DEF EPA/Play
+# Get EPA/Play Against
 ```{r}
 Lions_EPA_DEF <- data %>% filter(defteam == "DET", season_type == "REG", down <= 4) %>% group_by(defteam) %>% summarize(mean_epa = mean(epa, na.rm = TRUE)) %>% select(mean_epa) %>% pull(mean_epa)
 Eagles_EPA_DEF <- data %>% filter(defteam == "PHI", season_type == "REG", down <= 4) %>% group_by(defteam) %>% summarize(mean_epa = mean(epa, na.rm = TRUE)) %>% select(mean_epa) %>% pull(mean_epa)
@@ -223,8 +217,7 @@ Browns_EPA_DEF <- data %>% filter(defteam == "CLE", season_type == "REG", down <
 Panthers_EPA_DEF <- data %>% filter(defteam == "CAR", season_type == "REG", down <= 4) %>% group_by(defteam) %>% summarize(mean_epa = mean(epa, na.rm = TRUE)) %>% select(mean_epa) %>% pull(mean_epa)
 ```
 
-
-Create vector of all values
+# Add Values Into Vector
 ```{r}
 Lions_Vector <- c(Lions_win, Lions_SOS, Lions_PD, Lions_EPA, Lions_EPA_DEF)
 Eagles_Vector <- c(Eagles_win, Eagles_SOS, Eagles_PD, Eagles_EPA, Eagles_EPA_DEF)
@@ -260,8 +253,7 @@ Browns_Vector <- c(Browns_win, Browns_SOS, Browns_PD, Browns_EPA, Browns_EPA_DEF
 Panthers_Vector <- c(Panthers_win, Panthers_SOS, Panthers_PD, Panthers_EPA, Panthers_EPA_DEF)
 ```
 
-
-Get Weight Values
+# Calculate Values
 ```{r}
 manipulate_values <- function(input_vector) {
   output_vector <- input_vector
@@ -287,12 +279,11 @@ manipulate_values <- function(input_vector) {
   if (output_vector[5] < 0)
     output_vector[5] = 0
   
-  
-  return(output_vector)
+  return(round(output_vector, 2))
 }
 ```
 
-Assign team values
+# Assign Team Values
 ```{r}
 Lions_Values <- manipulate_values(Lions_Vector)
 Eagles_Values <- manipulate_values(Eagles_Vector)
@@ -328,8 +319,7 @@ Browns_Values <- manipulate_values(Browns_Vector)
 Panthers_Values <- manipulate_values(Panthers_Vector)
 ```
 
-
-Get the total score
+# Calculate Total Score
 ```{r}
 Lions_Score <- sum(Lions_Values)
 Eagles_Score <- sum(Eagles_Values)
@@ -365,29 +355,11 @@ Browns_Score <-sum(Browns_Values)
 Panthers_Score <- sum(Panthers_Values)
 ```
 
-
-Put all scores into a dataset
+# Create Total Dataset and Sort
 ```{r}
 team_scores <- data.frame(
   Team = c("Lions", "Eagles", "Bills", "Ravens", "Packers", "Bucs", "Broncos", "Chargers", "Vikings", "Commanders", "Chiefs", "Bengals", "Steelers", "Cardinals", "Seahawks", "Texans", "Rams", "Dolphins", "Falcons", "Niners", "Colts", "Bears", "Saints", "Jets", "Jaguars", "Cowboys", "Raiders", "Patriots", "Giants", "Titans", "Browns", "Panthers"),
   Total_Value = c(Lions_Score, Eagles_Score, Bills_Score, Ravens_Score, Packers_Score, Bucs_Score, Broncos_Score, Chargers_Score, Vikings_Score, Commanders_Score, Chiefs_Score, Bengals_Score, Steelers_Score, Cardinals_Score, Seahawks_Score, Texans_Score, Rams_Score, Dolphins_Score, Falcons_Score, Niners_Score, Colts_Score, Bears_Score, Saints_Score, Jets_Score, Jaguars_Score, Cowboys_Score, Raiders_Score, Patriots_Score, Giants_Score, Titans_Score, Browns_Score, Panthers_Score)
-)
-team_scores
-Chiefs_Values
-Lions_Values
+) %>% arrange(-Total_Value)
+datatable(team_scores)
 ```
-
-
-Sort team scores highest to lowest
-```{r}
-team_scores_sort <- team_scores %>% arrange(-Total_Value)
-team_scores_sort
-```
-
-```{r}
-Lions_Values
-Chargers_Values
-Eagles_Values
-Niners_Values
-```
-
